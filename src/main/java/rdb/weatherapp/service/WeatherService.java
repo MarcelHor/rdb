@@ -5,20 +5,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import rdb.weatherapp.dto.WeatherRequestDto;
 import rdb.weatherapp.model.City;
-import rdb.weatherapp.model.WeatherRawJson;
+import rdb.weatherapp.model.WeatherMeasurementDocument;
+import rdb.weatherapp.model.WeatherMeasurementDocument.WeatherCondition;
 import rdb.weatherapp.model.WeatherRecord;
 import rdb.weatherapp.repository.CityRepository;
-import rdb.weatherapp.repository.WeatherRawJsonRepository;
+import rdb.weatherapp.repository.WeatherMeasurementMongoRepository;
 import rdb.weatherapp.repository.WeatherRecordRepository;
 import rdb.weatherapp.util.WeatherMapper;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.bson.Document;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +27,7 @@ public class WeatherService {
     private final CityRepository cityRepository;
     private final WeatherRecordRepository weatherRecordRepository;
     private final WeatherMapper weatherMapper;
-    private final WeatherRawJsonRepository weatherRawJsonRepository;
+    private final WeatherMeasurementMongoRepository weatherMeasurementMongoRepository;
 
     public List<WeatherRecord> getOrFetchWeather(WeatherRequestDto request) {
         float lat, lon;
@@ -36,7 +35,7 @@ public class WeatherService {
 
         // 1. Zjistit mesto podle jmena nebo souradnic
 
-        //JMENO
+        // JMENO
         if (request.cityName() != null && !request.cityName().isBlank()) {
             // Nejdriv se podivat do db
             city = cityRepository.findByNameIgnoreCase(request.cityName()).orElse(null);
@@ -53,14 +52,14 @@ public class WeatherService {
                 JsonNode reverse = weatherApiClient.reverseGeocode(lat, lon);
                 JsonNode rev = reverse.get(0);
 
-                //save
+                // save
                 city = new City(rev.get("name").asText(), rev.get("country").asText(), lat, lon, null);
                 city = cityRepository.save(city);
             } else {
                 lat = city.getLat();
                 lon = city.getLon();
             }
-        //CORDS
+            // CORDS
         } else if (request.latitude() != null && request.longitude() != null) {
             lat = request.latitude().floatValue();
             lon = request.longitude().floatValue();
@@ -73,7 +72,7 @@ public class WeatherService {
                 JsonNode reverse = weatherApiClient.reverseGeocode(lat, lon);
                 JsonNode rev = reverse.get(0);
 
-                //save
+                // save
                 city = new City(rev.get("name").asText(), rev.get("country").asText(), lat, lon, null);
                 city = cityRepository.save(city);
             }
@@ -81,16 +80,16 @@ public class WeatherService {
             throw new RuntimeException("Either city name or coordinates must be provided");
         }
 
-        //FETCHOVANI HISTORIE
+        // FETCHOVANI HISTORIE
         LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC).minusHours(2).withMinute(0).withSecond(0).withNano(0);
 
-        //zkontrolvat cache
+        // zkontrolvat cache
         List<LocalDateTime> expectedTimestamps = new ArrayList<>();
         for (int i = 0; i < request.daysBack(); i++) {
             expectedTimestamps.add(now.minusDays(i).withHour(12).withMinute(0).withSecond(0).withNano(0));
         }
         List<WeatherRecord> cached = weatherRecordRepository.findAllByPlaceAndTimestampIn(city, expectedTimestamps);
-        //nasli jsme stejny pocet zaznamu s pozadovanym casem
+        // nasli jsme stejny pocet zaznamu s pozadovanym casem
         if (cached.size() == expectedTimestamps.size()) {
             System.out.println("All records found in cache");
             return cached;
@@ -99,21 +98,11 @@ public class WeatherService {
         // vypocitat range daysback
         long endUnix = now.toEpochSecond(ZoneOffset.UTC);
         long startUnix = now.minusDays(request.daysBack() - 1).toEpochSecond(ZoneOffset.UTC);
+
         // 3. Fetchni JSON z OpenWeather přes lat/lon
         JsonNode weatherJson = weatherApiClient.fetchWeatherHistory(lat, lon, startUnix, endUnix);
 
-        // 2. Uložit JSON do DB
-        Document bsonJson = Document.parse(weatherJson.toString());
-
-        WeatherRawJson raw = new WeatherRawJson();
-        raw.setCityName(city.getName());
-        raw.setLat(lat);
-        raw.setLon(lon);
-        raw.setFetchedAt(LocalDateTime.now(ZoneOffset.UTC));
-        raw.setJson(bsonJson);
-        weatherRawJsonRepository.save(raw);
-
-        // 4. Projit JSON
+        // 4. Projit JSON a ulozit do SQL i Mongo
         List<WeatherRecord> result = new ArrayList<>();
         for (JsonNode node : weatherJson.path("list")) {
             LocalDateTime timestamp = LocalDateTime.ofEpochSecond(node.get("dt").asLong(), 0, ZoneOffset.UTC);
@@ -127,7 +116,42 @@ public class WeatherService {
                 continue;
             }
 
-            // Vytvoř nový záznam z JSONu a ulož
+            // Uložit do MongoDB
+            WeatherMeasurementDocument doc = new WeatherMeasurementDocument();
+            doc.setCityName(city.getName());
+            doc.setLat(lat);
+            doc.setLon(lon);
+            doc.setTimestamp(timestamp);
+
+            doc.setTemp((float) node.path("main").path("temp").asDouble());
+            doc.setTempMin((float) node.path("main").path("temp_min").asDouble());
+            doc.setTempMax((float) node.path("main").path("temp_max").asDouble());
+            doc.setFeelsLike((float) node.path("main").path("feels_like").asDouble());
+            doc.setPressure(node.path("main").path("pressure").asInt());
+            doc.setHumidity(node.path("main").path("humidity").asInt());
+
+            doc.setWindSpeed((float) node.path("wind").path("speed").asDouble());
+            doc.setWindDeg(node.path("wind").path("deg").asInt());
+
+            if (node.has("rain")) {
+                doc.setRain1h((float) node.path("rain").path("1h").asDouble(0));
+            }
+
+            doc.setClouds(node.path("clouds").path("all").asInt());
+
+            List<WeatherCondition> conditions = new ArrayList<>();
+            for (JsonNode w : node.path("weather")) {
+                WeatherCondition condition = new WeatherCondition();
+                condition.setMain(w.path("main").asText());
+                condition.setDescription(w.path("description").asText());
+                condition.setIcon(w.path("icon").asText());
+                conditions.add(condition);
+            }
+            doc.setWeather(conditions);
+
+            weatherMeasurementMongoRepository.save(doc);
+
+            // Uložit do SQL
             WeatherRecord record = weatherMapper.fromJson(node, city, timestamp);
             weatherRecordRepository.save(record);
             result.add(record);
