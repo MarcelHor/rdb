@@ -1,5 +1,6 @@
 package rdb.weatherapp.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,23 +10,18 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class WeatherInfo {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "weather_record_id")
+    @JsonIgnore
     private WeatherRecord weatherRecord;
 
-    private Integer weatherId;
-    private String main;
-    private String description;
-    private String icon;
-
-    public WeatherInfo(Integer weatherId, String main, String description, String icon) {
-        this.weatherId = weatherId;
-        this.main = main;
-        this.description = description;
-        this.icon = icon;
-    }
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "condition_id")
+    private WeatherCondition condition;
 }
+

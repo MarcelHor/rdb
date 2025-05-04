@@ -1,5 +1,6 @@
 package rdb.weatherapp.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -34,11 +35,14 @@ public class WeatherRecord {
     private Float windSpeed;
     private Short windDeg;
 
+    @Column(name = "rain_1h")
     private Float rain1h;
     private Short clouds;
 
     @OneToMany(mappedBy = "weatherRecord", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<WeatherInfo> weatherInfoList = new ArrayList<>();
+
 
     public WeatherRecord(City place, LocalDateTime timestamp, Float tempMin, Float tempMax, Float temp, Float feelsLike, Short pressure, Short humidity, Float windSpeed, Short windDeg, Float rain1h, Short clouds) {
         this.place = place;

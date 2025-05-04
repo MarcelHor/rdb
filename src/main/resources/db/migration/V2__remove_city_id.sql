@@ -1,0 +1,1 @@
+ALTER TABLE city DROP COLUMN city_id;
