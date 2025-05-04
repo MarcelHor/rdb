@@ -5,8 +5,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import rdb.weatherapp.dto.WeatherRequestDto;
 import rdb.weatherapp.model.City;
+import rdb.weatherapp.model.WeatherRawJson;
 import rdb.weatherapp.model.WeatherRecord;
 import rdb.weatherapp.repository.CityRepository;
+import rdb.weatherapp.repository.WeatherRawJsonRepository;
 import rdb.weatherapp.repository.WeatherRecordRepository;
 import rdb.weatherapp.util.WeatherMapper;
 
@@ -14,6 +16,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.bson.Document;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +28,7 @@ public class WeatherService {
     private final CityRepository cityRepository;
     private final WeatherRecordRepository weatherRecordRepository;
     private final WeatherMapper weatherMapper;
+    private final WeatherRawJsonRepository weatherRawJsonRepository;
 
     public List<WeatherRecord> getOrFetchWeather(WeatherRequestDto request) {
         float lat, lon;
@@ -95,6 +101,17 @@ public class WeatherService {
         long startUnix = now.minusDays(request.daysBack() - 1).toEpochSecond(ZoneOffset.UTC);
         // 3. Fetchni JSON z OpenWeather přes lat/lon
         JsonNode weatherJson = weatherApiClient.fetchWeatherHistory(lat, lon, startUnix, endUnix);
+
+        // 2. Uložit JSON do DB
+        Document bsonJson = Document.parse(weatherJson.toString());
+
+        WeatherRawJson raw = new WeatherRawJson();
+        raw.setCityName(city.getName());
+        raw.setLat(lat);
+        raw.setLon(lon);
+        raw.setFetchedAt(LocalDateTime.now(ZoneOffset.UTC));
+        raw.setJson(bsonJson);
+        weatherRawJsonRepository.save(raw);
 
         // 4. Projit JSON
         List<WeatherRecord> result = new ArrayList<>();
