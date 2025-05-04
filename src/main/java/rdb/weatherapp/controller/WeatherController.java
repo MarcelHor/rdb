@@ -8,6 +8,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rdb.weatherapp.dto.WeatherRequestDto;
 import rdb.weatherapp.service.WeatherService;
+import rdb.weatherapp.dto.WeatherRecordDto;
+import rdb.weatherapp.dto.WeatherConditionDto;
+import rdb.weatherapp.model.WeatherRecord;
+import java.util.List;
+import rdb.weatherapp.dto.CityDto;
 
 @RestController
 @RequestMapping("/api/weather")
@@ -16,14 +21,39 @@ public class WeatherController {
 
     private final WeatherService weatherService;
 
-    @GetMapping("/current")
-    public ResponseEntity<?> getCurrentWeather(@Valid WeatherRequestDto request) {
-        boolean hasCity = request.cityName() != null && !request.cityName().isBlank();
-        boolean hasCoords = request.latitude() != null && request.longitude() != null;
+    @GetMapping("/history")
+    public ResponseEntity<List<WeatherRecordDto>> getWeatherHistory(@Valid WeatherRequestDto request) {
+        List<WeatherRecord> records = weatherService.getOrFetchWeather(request);
 
-        if (!hasCity && !hasCoords) {
-            return ResponseEntity.badRequest().body("Either city name or coordinates must be provided.");
-        }
-        return ResponseEntity.ok(weatherService.getOrFetchWeather(request));
+        List<WeatherRecordDto> dtoList = records.stream().map(record -> {
+            var place = record.getPlace();
+            var cityDto = new CityDto(place.getName(), place.getCountry(), place.getLat(), place.getLon());
+
+            List<WeatherConditionDto> conditionDtos = record.getWeatherInfoList().stream()
+                    .map(info -> new WeatherConditionDto(
+                            info.getCondition().getMain(),
+                            info.getCondition().getDescription(),
+                            info.getCondition().getIcon()
+                    ))
+                    .toList();
+
+            return new WeatherRecordDto(
+                    record.getTimestamp(),
+                    record.getTempMin(),
+                    record.getTempMax(),
+                    record.getTemp(),
+                    record.getFeelsLike(),
+                    record.getPressure(),
+                    record.getHumidity(),
+                    record.getWindSpeed(),
+                    record.getWindDeg(),
+                    record.getRain1h(),
+                    record.getClouds(),
+                    cityDto,
+                    conditionDtos
+            );
+        }).toList();
+
+        return ResponseEntity.ok(dtoList);
     }
 }

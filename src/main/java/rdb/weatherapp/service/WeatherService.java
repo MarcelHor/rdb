@@ -76,12 +76,23 @@ public class WeatherService {
         }
 
         //FETCHOVANI HISTORIE
-
-        // 2. vypocitat daysBack
         LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC).minusHours(2).withMinute(0).withSecond(0).withNano(0);
+
+        //zkontrolvat cache
+        List<LocalDateTime> expectedTimestamps = new ArrayList<>();
+        for (int i = 0; i < request.daysBack(); i++) {
+            expectedTimestamps.add(now.minusDays(i).withHour(12).withMinute(0).withSecond(0).withNano(0));
+        }
+        List<WeatherRecord> cached = weatherRecordRepository.findAllByPlaceAndTimestampIn(city, expectedTimestamps);
+        //nasli jsme stejny pocet zaznamu s pozadovanym casem
+        if (cached.size() == expectedTimestamps.size()) {
+            System.out.println("All records found in cache");
+            return cached;
+        }
+
+        // vypocitat range daysback
         long endUnix = now.toEpochSecond(ZoneOffset.UTC);
         long startUnix = now.minusDays(request.daysBack() - 1).toEpochSecond(ZoneOffset.UTC);
-
         // 3. Fetchni JSON z OpenWeather přes lat/lon
         JsonNode weatherJson = weatherApiClient.fetchWeatherHistory(lat, lon, startUnix, endUnix);
 
