@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: weatherApp
+  data:
+    mongodb:
+      database: ${MONGO_DB}
+      authentication-database: admin
+      host: ${MONGO_HOST}
+      port: ${MONGO_PORT:27017}
+      username: ${MONGO_USERNAME}
+      password: ${MONGO_PASSWORD}
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT:3306}/${MYSQL_DB}
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+
+openweathermap:
+  apikey: ${OPENWEATHERMAP_APIKEY}
+---
+# Profile: dev
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+# During development, Hibernate takes care of migration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true

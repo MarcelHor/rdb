@@ -14,7 +14,7 @@ public class WeatherApiClient {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    @Value("${weather.api.key}")
+    @Value("${openweathermap.apikey}")
     private String apiKey;
 
     public JsonNode fetchWeatherHistory(double lat, double lon, long start, long end) {
