@@ -2,8 +2,10 @@ package rdb.weatherapp.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import rdb.weatherapp.dto.WeatherRequestDto;
 import rdb.weatherapp.service.impl.WeatherServiceImpl;
@@ -52,5 +54,11 @@ public class WeatherController {
                     conditionDtos
             );
         }).toList();
+    }
+
+    @GetMapping("/genTest")
+    public ResponseEntity<?> genTest(@RequestParam int n, @RequestParam String city) {
+        weatherService.generateTestData(n, city);
+        return ResponseEntity.status(204).build();
     }
 }

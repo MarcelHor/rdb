@@ -6,12 +6,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import rdb.weatherapp.dto.WeatherRequestDto;
 import rdb.weatherapp.model.City;
+import rdb.weatherapp.model.WeatherInfo;
 import rdb.weatherapp.model.WeatherMeasurementDocument;
 import rdb.weatherapp.model.WeatherMeasurementDocument.WeatherCondition;
 import rdb.weatherapp.model.WeatherRecord;
-import rdb.weatherapp.repository.CityRepository;
-import rdb.weatherapp.repository.WeatherMeasurementMongoRepository;
-import rdb.weatherapp.repository.WeatherRecordRepository;
+import rdb.weatherapp.repository.*;
 import rdb.weatherapp.service.WeatherService;
 import rdb.weatherapp.util.WeatherMapper;
 
@@ -19,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +30,8 @@ public class WeatherServiceImpl implements WeatherService {
     private final WeatherRecordRepository weatherRecordRepository;
     private final WeatherMapper weatherMapper;
     private final WeatherMeasurementMongoRepository weatherMeasurementMongoRepository;
+    private final WeatherConditionRepository weatherConditionRepository;
+    private final WeatherInfoRepository weatherInfoRepository;
 
     @Override
     public List<WeatherRecord> getOrFetchWeather(WeatherRequestDto request) {
@@ -161,5 +163,51 @@ public class WeatherServiceImpl implements WeatherService {
         }
 
         return result;
+    }
+
+    public void generateTestData(int n, String CityName){
+        Random random = new Random();
+        City city = cityRepository.findByNameIgnoreCase(CityName).orElseThrow();
+
+        for (int i = 0; i < n; i++) {
+            LocalDateTime timestamp = LocalDateTime.now().minusDays(random.nextInt(30));
+            float temp = random.nextFloat() * 40 - 10;
+            float tempMin = temp - 3;
+            float tempMax = temp + 3;
+            float feelsLike = temp - 1 + random.nextFloat() * 2;
+            short pressure = (short) (980 + random.nextInt(40));
+            short humidity = (short) (30 + random.nextInt(70));
+            float windSpeed = random.nextFloat() * 20;
+            short windDeg = (short) random.nextInt(360);
+            float rain1h = random.nextFloat() < 0.3 ? random.nextFloat() * 10 : 0f;
+            short clouds = (short) (random.nextInt(101));
+
+            WeatherRecord record = new WeatherRecord(
+                    city,
+                    timestamp,
+                    tempMin,
+                    tempMax,
+                    temp,
+                    feelsLike,
+                    pressure,
+                    humidity,
+                    windSpeed,
+                    windDeg,
+                    rain1h,
+                    clouds
+            );
+
+            if(!weatherRecordRepository.existsByPlaceAndTimestamp(city, timestamp)) {
+                record = weatherRecordRepository.save(record);
+                rdb.weatherapp.model.WeatherCondition condition = weatherConditionRepository.findByWeatherIdAndMainAndDescriptionAndIcon(800, "Clear", "clear sky", "01d")
+                        .orElse(null);
+                if (condition == null) {
+                    condition = new rdb.weatherapp.model.WeatherCondition(800, "Clear", "clear sky", "01d");
+                    condition = weatherConditionRepository.save(condition);
+                }
+                WeatherInfo weatherInfo = new WeatherInfo(record, condition);
+                weatherInfoRepository.save(weatherInfo);
+            }
+        }
     }
 }
