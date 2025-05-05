@@ -11,24 +11,26 @@ import java.util.Locale;
 @Component
 @RequiredArgsConstructor
 public class WeatherApiClient {
+    private static final String HISTORY_BASE_URL = "https://history.openweathermap.org/data/2.5/history/city";
+    private static final String GEO_BASE_URL = "https://api.openweathermap.org/geo/1.0";
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     @Value("${openweathermap.apikey}")
     private String apiKey;
 
     public JsonNode fetchWeatherHistory(double lat, double lon, long start, long end) {
-        String url = String.format(Locale.US, "https://history.openweathermap.org/data/2.5/history/city?lat=%f&lon=%f&type=hour&start=%d&end=%d&appid=%s&units=metric", lat, lon, start, end, apiKey);
+        String url = String.format(Locale.US, HISTORY_BASE_URL + "?lat=%f&lon=%f&type=hour&start=%d&end=%d&appid=%s&units=metric", lat, lon, start, end, apiKey);
         return restTemplate.getForObject(url, JsonNode.class);
     }
 
     public JsonNode fetchCoordinatesByCityName(String cityName) {
-        String url = String.format("https://api.openweathermap.org/geo/1.0/direct?q=%s&limit=1&appid=%s", cityName, apiKey);
+        String url = String.format(GEO_BASE_URL + "/direct?q=%s&limit=1&appid=%s", cityName, apiKey);
         return restTemplate.getForObject(url, JsonNode.class);
     }
 
     public JsonNode reverseGeocode(double lat, double lon) {
-        String url = String.format(Locale.US, "https://api.openweathermap.org/geo/1.0/reverse?lat=%f&lon=%f&limit=1&appid=%s", lat, lon, apiKey);
+        String url = String.format(Locale.US, GEO_BASE_URL + "/reverse?lat=%f&lon=%f&limit=1&appid=%s", lat, lon, apiKey);
         return restTemplate.getForObject(url, JsonNode.class);
     }
 }
