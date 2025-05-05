@@ -207,6 +207,30 @@ public class WeatherServiceImpl implements WeatherService {
                 }
                 WeatherInfo weatherInfo = new WeatherInfo(record, condition);
                 weatherInfoRepository.save(weatherInfo);
+
+                WeatherMeasurementDocument doc = new WeatherMeasurementDocument();
+                doc.setCityName(city.getName());
+                doc.setLat(city.getLat());
+                doc.setLon(city.getLon());
+                doc.setTimestamp(timestamp);
+                doc.setTemp(temp);
+                doc.setTempMin(tempMin);
+                doc.setTempMax(tempMax);
+                doc.setFeelsLike(feelsLike);
+                doc.setPressure(pressure);
+                doc.setHumidity(humidity);
+                doc.setWindSpeed(windSpeed);
+                doc.setWindDeg(windDeg);
+                doc.setRain1h(rain1h);
+                doc.setClouds(clouds);
+                WeatherCondition cond = new WeatherCondition();
+                cond.setMain(condition.getMain());
+                cond.setDescription(condition.getDescription());
+                cond.setIcon(condition.getIcon());
+                List<WeatherCondition> conditions = new ArrayList<>();
+                conditions.add(cond);
+                doc.setWeather(conditions);
+                weatherMeasurementMongoRepository.save(doc);
             }
         }
     }
