@@ -2,6 +2,7 @@ package rdb.weatherapp.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import rdb.weatherapp.dto.WeatherRequestDto;
 import rdb.weatherapp.model.City;
@@ -21,6 +22,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class WeatherServiceImpl implements WeatherService {
 
     private final WeatherApiClient weatherApiClient;
@@ -92,7 +94,7 @@ public class WeatherServiceImpl implements WeatherService {
         List<WeatherRecord> cached = weatherRecordRepository.findAllByPlaceAndTimestampIn(city, expectedTimestamps);
         // nasli jsme stejny pocet zaznamu s pozadovanym casem
         if (cached.size() == expectedTimestamps.size()) {
-            System.out.println("All records found in cache");
+            log.info("All records found in cache");
             return cached;
         }
 

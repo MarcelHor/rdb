@@ -13,7 +13,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/weather/advanced")
+@RequestMapping("/weather/advanced")
 @RequiredArgsConstructor
 public class AdvancedWeatherController {
 

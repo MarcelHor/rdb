@@ -13,9 +13,11 @@ spring:
     url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT:3306}/${MYSQL_DB}
     username: ${MYSQL_USER}
     password: ${MYSQL_PASSWORD}
-
 openweathermap:
   apikey: ${OPENWEATHERMAP_APIKEY}
+server:
+  servlet:
+    context-path: /api
 ---
 # Profile: dev
 spring:

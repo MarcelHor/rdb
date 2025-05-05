@@ -14,7 +14,7 @@ import java.util.List;
 import rdb.weatherapp.dto.CityDto;
 
 @RestController
-@RequestMapping("/api/weather")
+@RequestMapping("/weather")
 @RequiredArgsConstructor
 public class WeatherController {
 
