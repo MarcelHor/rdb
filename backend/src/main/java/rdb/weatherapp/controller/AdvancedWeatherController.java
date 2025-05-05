@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import rdb.weatherapp.dto.RainyCityDto;
 import rdb.weatherapp.dto.StableDayDto;
 import rdb.weatherapp.dto.TempDiffCityDto;
-import rdb.weatherapp.service.AdvancedWeatherService;
+import rdb.weatherapp.service.impl.AdvancedWeatherServiceImpl;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -17,7 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdvancedWeatherController {
 
-    private final AdvancedWeatherService weatherService;
+    private final AdvancedWeatherServiceImpl weatherService;
 
     @GetMapping("/rain")
     public ResponseEntity<List<RainyCityDto>> getCitiesWithRain(

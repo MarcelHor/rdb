@@ -2,12 +2,11 @@ package rdb.weatherapp.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import rdb.weatherapp.dto.WeatherRequestDto;
-import rdb.weatherapp.service.WeatherService;
+import rdb.weatherapp.service.impl.WeatherServiceImpl;
 import rdb.weatherapp.dto.WeatherRecordDto;
 import rdb.weatherapp.dto.WeatherConditionDto;
 import rdb.weatherapp.model.WeatherRecord;
@@ -19,13 +18,13 @@ import rdb.weatherapp.dto.CityDto;
 @RequiredArgsConstructor
 public class WeatherController {
 
-    private final WeatherService weatherService;
+    private final WeatherServiceImpl weatherService;
 
     @GetMapping("/history")
-    public ResponseEntity<List<WeatherRecordDto>> getWeatherHistory(@Valid WeatherRequestDto request) {
+    public List<WeatherRecordDto> getWeatherHistory(@Valid WeatherRequestDto request) {
         List<WeatherRecord> records = weatherService.getOrFetchWeather(request);
 
-        List<WeatherRecordDto> dtoList = records.stream().map(record -> {
+        return records.stream().map(record -> {
             var place = record.getPlace();
             var cityDto = new CityDto(place.getName(), place.getCountry(), place.getLat(), place.getLon());
 
@@ -53,7 +52,5 @@ public class WeatherController {
                     conditionDtos
             );
         }).toList();
-
-        return ResponseEntity.ok(dtoList);
     }
 }

@@ -1,4 +1,4 @@
-package rdb.weatherapp.service;
+package rdb.weatherapp.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
