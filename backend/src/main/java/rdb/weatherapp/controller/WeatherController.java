@@ -99,7 +99,7 @@ public class WeatherController {
 
     @GetMapping("/rain")
     @Operation(
-            summary = "Najít dny v definovaném rozmezí, kdy pro dané místo bylo stále stejné počasí zadané jako parametr a pro tyto dny z JSON získat parametry clouds a cnt"
+            summary = "Všechna místa kde v daný den nebo rozmezí dnů pršelo s danou intenzitou."
     )
     public ResponseEntity<List<RainyCityDto>> getCitiesWithRain(
             @RequestParam float intensity,
@@ -110,6 +110,9 @@ public class WeatherController {
     }
 
     @GetMapping("/stable")
+    @Operation(
+            summary = "Najít dny v definovaném rozmezí, kdy pro dané místo bylo stále stejné počasí zadané jako parametr a pro tyto dny z JSON získat parametry clouds a cnt"
+    )
     public ResponseEntity<List<StableDayDto>> getStableWeatherDays(
             @RequestParam String city,
             @RequestParam String weatherType,
@@ -130,6 +133,19 @@ public class WeatherController {
     }
 
     @GetMapping("/genTest")
+    @Operation(
+            summary = "Vygenerovat testovací data pro dané město",
+            parameters = {
+                    @io.swagger.v3.oas.annotations.Parameter(
+                            name = "n",
+                            description = "Počet testovacích dat, které chcete vygenerovat."
+                    ),
+                    @io.swagger.v3.oas.annotations.Parameter(
+                            name = "city",
+                            description = "Název města pro generování testovacích dat."
+                    )
+            }
+    )
     public ResponseEntity<?> genTest(@RequestParam int n, @RequestParam String city) {
         weatherService.generateTestData(n, city);
         return ResponseEntity.status(204).build();
