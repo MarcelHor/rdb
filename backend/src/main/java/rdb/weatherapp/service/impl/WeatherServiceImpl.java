@@ -110,6 +110,11 @@ public class WeatherServiceImpl implements WeatherService {
             log.debug("No city found for coordinates: {}, {}", lat, lon);
             JsonNode reverse = weatherApiClient.reverseGeocode(lat, lon);
             JsonNode rev = reverse.get(0);
+            var cityByName = cityRepository.findByNameIgnoreCase(rev.get("name").asText());
+            if (cityByName.isPresent()) {
+                log.debug("City (by name) found for coordinates: {}, {}: {}", lat, lon, cityByName.get());
+                return cityByName.get();
+            }
             return cityRepository.save(new City(rev.get("name").asText(), rev.get("country").asText(), lat, lon, null));
         }
         log.debug("City found for coordinates: {}, {}: {}", lat, lon, city.get());
