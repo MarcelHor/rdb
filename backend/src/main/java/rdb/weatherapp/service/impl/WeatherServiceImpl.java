@@ -18,6 +18,7 @@ import rdb.weatherapp.util.WeatherMapper;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -149,16 +150,15 @@ public class WeatherServiceImpl implements WeatherService {
      *
      */
     private List<WeatherRecord> fetchAndCacheWeather(City city, int daysBack) {
+        log.info("Fetching weather for city: {}, {} days back", city.getName(), daysBack);
         float lat = city.getLat();
         float lon = city.getLon();
-        System.out.println("Fetching weather for city: " + city.getName() + " lat: " + lat + " lon: " + lon);
 
-        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC).minusHours(2).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime now = LocalDateTime.of(LocalDate.now(), LocalTime.NOON);
 
         List<LocalDateTime> expectedTimestamps = new ArrayList<>();
-        for (int i = 0; i < daysBack; i++) {
-            expectedTimestamps.add(now.minusDays(i).withHour(12).withMinute(0).withSecond(0).withNano(0));
-        }
+        for (int i = 0; i < daysBack; i++) expectedTimestamps.add(now.minusDays(i));
+
 
         List<WeatherRecord> cached = weatherRecordRepository.findAllByPlaceAndTimestampIn(city, expectedTimestamps);
         if (cached.size() == expectedTimestamps.size()) {
