@@ -5,18 +5,18 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import rdb.weatherapp.dto.CityDto;
-import rdb.weatherapp.dto.WeatherConditionDto;
-import rdb.weatherapp.dto.WeatherRecordDto;
+import rdb.weatherapp.dto.*;
 import rdb.weatherapp.model.WeatherRecord;
 import rdb.weatherapp.service.impl.WeatherServiceImpl;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -95,6 +95,38 @@ public class WeatherController {
                     conditionDtos
             );
         }).toList();
+    }
+
+    @GetMapping("/rain")
+    @Operation(
+            summary = "Najít dny v definovaném rozmezí, kdy pro dané místo bylo stále stejné počasí zadané jako parametr a pro tyto dny z JSON získat parametry clouds a cnt"
+    )
+    public ResponseEntity<List<RainyCityDto>> getCitiesWithRain(
+            @RequestParam float intensity,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    ) {
+        return ResponseEntity.ok(weatherService.findCitiesWithRainIntensity(intensity, from, to));
+    }
+
+    @GetMapping("/stable")
+    public ResponseEntity<List<StableDayDto>> getStableWeatherDays(
+            @RequestParam String city,
+            @RequestParam String weatherType,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    ) {
+        return ResponseEntity.ok(weatherService.findStableWeatherDays(city, weatherType, from, to));
+    }
+
+    @GetMapping("/diff")
+    @Operation(
+            summary = "Najít místa, kde v daný den byl největší rozdíl teplot"
+    )
+    public ResponseEntity<TempDiffCityDto> getCityWithMaxTempDiff(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        return ResponseEntity.ok(weatherService.findCityWithMaxTempDiff(date));
     }
 
     @GetMapping("/genTest")
