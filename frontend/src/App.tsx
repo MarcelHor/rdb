@@ -8,21 +8,16 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import {
-  Container,
-  Row,
-  Col,
-  Navbar,
-  Form,
-  Button,
-  Dropdown,
-  DropdownButton,
-  Spinner,
-} from "react-bootstrap";
+import { Container, Row, Col } from "react-bootstrap";
 import { Map as LeafletMap } from "leaflet";
 import type { LatLngExpression } from "leaflet";
 import { WeatherControllerApi } from "./api/build";
 import type { WeatherRecordDto } from "./api/build";
+import Header from "./Components/Header";
+import Sidebar from "./Components/Sidebar";
+import SpinnerComponent from "./Components/Spinner";
+import { useToast } from "./Context/ToastContext";
+import { ToastType } from "./utils/ToastEnum";
 
 const api = new WeatherControllerApi();
 
@@ -45,8 +40,8 @@ function App() {
   const [records, setRecords] = useState<WeatherRecordDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [marker, setMarker] = useState<LatLngExpression | null>(null);
-
   const mapRef = useRef<LeafletMap | null>(null);
+  const { showToast } = useToast();
 
   const fetchWeather = async (params: {
     cityName?: string;
@@ -72,9 +67,11 @@ function App() {
           setMarker(coords);
         }
       }
+      showToast(ToastType.Success, "Úspěšně načtena historie počasí.");
     } catch (e) {
       console.error("Chyba při načítání počasí:", e);
       setRecords([]);
+      showToast(ToastType.Error, "Chyba při načítání historie počasí.");
     } finally {
       setLoading(false);
     }
@@ -84,6 +81,8 @@ function App() {
     setMarker(null);
     if (cityName.trim() !== "") {
       fetchWeather({ cityName });
+    } else {
+      showToast(ToastType.Warning, "Zadejte název města.");
     }
   };
 
@@ -96,30 +95,8 @@ function App() {
 
   return (
     <>
-      {loading && (
-        <div
-          style={{
-            position: "fixed",
-            zIndex: 9999,
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            background: "rgba(255,255,255,0.7)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Spinner animation="border" variant="primary" />
-        </div>
-      )}
-
-      <Navbar bg="dark" variant="dark">
-        <Container fluid>
-          <Navbar.Brand className="ms-3">RDB - WeatherApp</Navbar.Brand>
-        </Container>
-      </Navbar>
+      <SpinnerComponent loading={loading} />
+      <Header />
 
       <Container fluid className="vh-100">
         <Row className="h-100">
@@ -127,56 +104,19 @@ function App() {
             md={3}
             className="bg-light p-3 border-end overflow-auto d-flex flex-column"
           >
-            {/* Inputy vedle sebe */}
-            <div className="d-flex mb-3 gap-2">
-              <Form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleCitySearch();
-                }}
-              >
-                <div className="d-flex mb-3 gap-2">
-                  <Form.Control
-                    type="text"
-                    placeholder="Město"
-                    value={cityName}
-                    onChange={(e) => {
-                      setCityName(e.target.value);
-                      setMarker(null);
-                    }}
-                  />
-                  <DropdownButton
-                    title={`${daysBack} dní`}
-                    onSelect={(val) => setDaysBack(Number(val))}
-                  >
-                    {[1, 2, 3, 4, 5, 6, 7].map((d) => (
-                      <Dropdown.Item key={d} eventKey={d}>
-                        {d}
-                      </Dropdown.Item>
-                    ))}
-                  </DropdownButton>
-                  <Button variant="primary" type="submit">
-                    Hledat
-                  </Button>
-                </div>
-              </Form>
-            </div>
-
-            {/* Výpis počasí */}
-            <div>
-              {records.length === 0 && !loading && (
-                <div className="text-muted">Žádná data</div>
-              )}
-              {records.map((rec, idx) => (
-                <div key={idx} className="mb-2">
-                  <strong>{rec.timestamp}</strong>
-                  <br />
-                  Město: {rec.city?.name ?? "?"}
-                  <br />
-                  Teplota: {rec.temp} °C
-                </div>
-              ))}
-            </div>
+            <Sidebar
+              cityName={cityName}
+              setCityName={setCityName}
+              daysBack={daysBack}
+              setDaysBack={setDaysBack}
+              records={records}
+              setRecords={setRecords}
+              loading={loading}
+              setLoading={setLoading}
+              marker={marker}
+              setMarker={setMarker}
+              handleCitySearch={handleCitySearch}
+            />
           </Col>
 
           <Col md={9} className="p-0">
