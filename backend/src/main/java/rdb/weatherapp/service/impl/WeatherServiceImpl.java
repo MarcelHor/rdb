@@ -103,14 +103,16 @@ public class WeatherServiceImpl implements WeatherService {
      * mame city s danejma souradnicema? great return it. otherwise pomoci souradnic lookupni mesto a uloz do db
      */
     private City resolveCityByCoordinates(float lat, float lon) {
-        System.out.println("Resolving city by coordinates: " + lat + ", " + lon);
-        var city = cityRepository.findByLatAndLon(lat, lon);
+        log.info("Resolving city by coordinates: {}, {}", lat, lon);
+        var city = cityRepository.findByLatAndLon(String.valueOf(lat), String.valueOf(lon));
 
         if (city.isEmpty()) {
+            log.debug("No city found for coordinates: {}, {}", lat, lon);
             JsonNode reverse = weatherApiClient.reverseGeocode(lat, lon);
             JsonNode rev = reverse.get(0);
             return cityRepository.save(new City(rev.get("name").asText(), rev.get("country").asText(), lat, lon, null));
         }
+        log.debug("City found for coordinates: {}, {}: {}", lat, lon, city.get());
         return city.get();
     }
 
@@ -118,8 +120,11 @@ public class WeatherServiceImpl implements WeatherService {
      * mame city se jmenem? great return it. otherwise lookupni souradnice danyho mesta a uloz do db
      */
     private City resolveCityByName(String cityName) {
+        log.debug("Resolving city by name: {}", cityName);
         var city = cityRepository.findByNameIgnoreCase(cityName);
+
         if (city.isEmpty()) {
+            log.debug("No city found for name: {}", cityName);
             JsonNode geo = weatherApiClient.fetchCoordinatesByCityName(cityName);
             if (geo.isEmpty()) throw new RuntimeException("City not found via geocoding");
 
@@ -131,6 +136,7 @@ public class WeatherServiceImpl implements WeatherService {
             JsonNode rev = reverse.get(0);
             return cityRepository.save(new City(rev.get("name").asText(), rev.get("country").asText(), lat, lon, null));
         }
+        log.debug("City found for name: {}: {}", cityName, city.get());
         return city.get();
     }
 

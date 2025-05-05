@@ -18,6 +18,10 @@ openweathermap:
 server:
   servlet:
     context-path: /api
+
+logging:
+  level:
+    rdb.weatherapp: DEBUG
 ---
 # Profile: dev
 spring:
