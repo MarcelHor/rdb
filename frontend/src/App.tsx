@@ -129,32 +129,37 @@ function App() {
           >
             {/* Inputy vedle sebe */}
             <div className="d-flex mb-3 gap-2">
-              <Form.Control
-                type="text"
-                placeholder="Město"
-                value={cityName}
-                onChange={(e) => {
-                  setCityName(e.target.value);
-                  setMarker(null);
-                }}
+              <Form
                 onSubmit={(e) => {
                   e.preventDefault();
                   handleCitySearch();
                 }}
-              />
-              <DropdownButton
-                title={`${daysBack} dní`}
-                onSelect={(val) => setDaysBack(Number(val))}
               >
-                {[1, 2, 3, 4, 5, 6, 7].map((d) => (
-                  <Dropdown.Item key={d} eventKey={d}>
-                    {d}
-                  </Dropdown.Item>
-                ))}
-              </DropdownButton>
-              <Button variant="primary" onClick={handleCitySearch}>
-                Hledat
-              </Button>
+                <div className="d-flex mb-3 gap-2">
+                  <Form.Control
+                    type="text"
+                    placeholder="Město"
+                    value={cityName}
+                    onChange={(e) => {
+                      setCityName(e.target.value);
+                      setMarker(null);
+                    }}
+                  />
+                  <DropdownButton
+                    title={`${daysBack} dní`}
+                    onSelect={(val) => setDaysBack(Number(val))}
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7].map((d) => (
+                      <Dropdown.Item key={d} eventKey={d}>
+                        {d}
+                      </Dropdown.Item>
+                    ))}
+                  </DropdownButton>
+                  <Button variant="primary" type="submit">
+                    Hledat
+                  </Button>
+                </div>
+              </Form>
             </div>
 
             {/* Výpis počasí */}
