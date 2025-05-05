@@ -3,13 +3,18 @@ package rdb.weatherapp.model;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.TimeSeries;
 
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-@Document(collection = "weather_raw")
+@TimeSeries(
+        collection = "weather_raw",
+        timeField = "timestamp",
+        expireAfter = "30d"
+)
 public class WeatherMeasurementDocument {
     @Id
     private String id;
