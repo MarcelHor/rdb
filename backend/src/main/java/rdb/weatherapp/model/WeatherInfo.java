@@ -23,5 +23,10 @@ public class WeatherInfo {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "condition_id")
     private WeatherCondition condition;
+
+    public WeatherInfo(WeatherRecord weatherRecord, WeatherCondition condition) {
+        this.weatherRecord = weatherRecord;
+        this.condition = condition;
+    }
 }
 

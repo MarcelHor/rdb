@@ -5,7 +5,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+<<<<<<< HEAD
 import org.springframework.validation.annotation.Validated;
+=======
+import org.springframework.http.ResponseEntity;
+>>>>>>> 5b35ea27b3db62bac2d2822e66eda0cac814ca2d
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -94,5 +98,11 @@ public class WeatherController {
                     conditionDtos
             );
         }).toList();
+    }
+
+    @GetMapping("/genTest")
+    public ResponseEntity<?> genTest(@RequestParam int n, @RequestParam String city) {
+        weatherService.generateTestData(n, city);
+        return ResponseEntity.status(204).build();
     }
 }
