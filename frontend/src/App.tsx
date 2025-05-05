@@ -48,13 +48,15 @@ function App() {
     lat?: number;
     lon?: number;
   }) => {
+    const lat = params.lat ? Number(params.lat.toFixed(4)) : undefined;
+    const lon = params.lon ? Number(params.lon.toFixed(4)) : undefined;
     try {
       setLoading(true);
       const res = await api.getWeatherHistory(
         daysBack,
         params.cityName,
-        params.lat,
-        params.lon
+        lat,
+        lon
       );
       const data = res.data ?? [];
       setRecords(data);
