@@ -25,8 +25,5 @@ spring:
     activate:
       on-profile: dev
 
-# During development, Hibernate takes care of migration
   jpa:
-    hibernate:
-      ddl-auto: update
     show-sql: true
