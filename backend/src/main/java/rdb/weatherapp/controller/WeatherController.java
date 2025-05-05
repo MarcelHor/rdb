@@ -59,7 +59,7 @@ public class WeatherController {
         List<WeatherRecord> records;
         if (latitude != null && longitude != null) {
             records = weatherService.getOrFetchWeather(
-                    latitude, latitude, daysBack
+                    latitude, longitude, daysBack
             );
         } else if (cityName != null && !cityName.isEmpty()) {
             records = weatherService.getOrFetchWeather(
@@ -124,7 +124,7 @@ public class WeatherController {
 
     @GetMapping("/diff")
     @Operation(
-            summary = "Najít místa, kde v daný den byl největší rozdíl teplot"
+            summary = "Najít místo, kde v daný den byl největší rozdíl teplot"
     )
     public ResponseEntity<TempDiffCityDto> getCityWithMaxTempDiff(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date

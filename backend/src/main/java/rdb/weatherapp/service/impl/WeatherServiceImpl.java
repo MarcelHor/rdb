@@ -38,7 +38,7 @@ public class WeatherServiceImpl implements WeatherService {
 
     @Override
     public List<WeatherRecord> getOrFetchWeather(float lat, float lon, int daysBack) {
-        var city = resolveCityByCoordinates((float) lat, (float) lon);
+        var city = resolveCityByCoordinates(lat, lon);
         return fetchAndCacheWeather(city, daysBack);
     }
 
@@ -55,8 +55,11 @@ public class WeatherServiceImpl implements WeatherService {
         LocalDateTime toDt = to.atTime(23, 59, 59);
 
         List<WeatherMeasurementDocument> docs = mongoRepo.findByRain1hGreaterThanAndTimestampBetween(intensity, fromDt, toDt);
+        log.debug("Found {} records with rain intensity greater than {}", docs.size(), intensity);
 
-        return docs.stream().collect(Collectors.groupingBy(doc -> doc.getCityName() + doc.getLat() + doc.getLon())).values().stream().map(list -> {
+        return docs.stream()
+                .collect(Collectors.groupingBy(doc -> doc.getCityName() + doc.getLat() + doc.getLon()))
+                .values().stream().map(list -> {
             WeatherMeasurementDocument doc = list.getFirst();
             float maxRain = list.stream().map(WeatherMeasurementDocument::getRain1h).filter(Objects::nonNull).max(Float::compare).orElse(0f);
             return new RainyCityDto(doc.getCityName(), doc.getLat(), doc.getLon(), maxRain);
@@ -100,6 +103,7 @@ public class WeatherServiceImpl implements WeatherService {
      * mame city s danejma souradnicema? great return it. otherwise pomoci souradnic lookupni mesto a uloz do db
      */
     private City resolveCityByCoordinates(float lat, float lon) {
+        System.out.println("Resolving city by coordinates: " + lat + ", " + lon);
         var city = cityRepository.findByLatAndLon(lat, lon);
 
         if (city.isEmpty()) {
@@ -136,6 +140,7 @@ public class WeatherServiceImpl implements WeatherService {
     private List<WeatherRecord> fetchAndCacheWeather(City city, int daysBack) {
         float lat = city.getLat();
         float lon = city.getLon();
+        System.out.println("Fetching weather for city: " + city.getName() + " lat: " + lat + " lon: " + lon);
 
         LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC).minusHours(2).withMinute(0).withSecond(0).withNano(0);
 
