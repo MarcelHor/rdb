@@ -1,6 +1,5 @@
 import { Navbar, Container, Image } from "react-bootstrap";
-import logo from "../../public/icon.png";
-
+import logo from "../assets/icon.png";
 export default function Header() {
   return (
     <>

@@ -100,11 +100,11 @@ function App() {
       <SpinnerComponent loading={loading} />
       <Header />
 
-      <Container fluid className="vh-100">
-        <Row className="h-100">
+      <Container fluid style={{ height: "calc(100vh - 84px)" }}>
+      <Row className="h-100">
           <Col
             md={3}
-            className="bg-light p-3 border-end overflow-auto d-flex flex-column"
+            className="bg-light p-3 border-end d-flex flex-column overflow-hidden"
           >
             <Sidebar
               cityName={cityName}
